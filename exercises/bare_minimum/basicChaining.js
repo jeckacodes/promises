@@ -10,11 +10,33 @@
 
 var fs = require('fs');
 var Promise = require('bluebird');
+var {getStatusCodeAsync, pluckFirstLineFromFileAsync} = require('./promiseConstructor.js');
+var {getGitHubProfileAsync} = require('./promisification.js');
 
 
 
 var fetchProfileAndWriteToFile = function(readFilePath, writeFilePath) {
-  // TODO
+  return pluckFirstLineFromFileAsync(readFilePath)
+    .then( (username) => {
+      return getGitHubProfileAsync(username);
+    }) //send request
+    .then( (profile) => {
+      return new Promise( (resolve, reject) => {
+        fs.writeFile(writeFilePath, JSON.stringify(profile), (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve('done'); // even though we're not returning a value, resolve still needs to be called in order to fulfill the promise
+          }
+        });
+      });
+    })
+    // .then( (message) => {
+    //   return message;
+    // }) // writes JSON response
+    .catch( (error) => {
+      console.log('Error: ', error);
+    });
 };
 
 // Export these functions so we can test them
